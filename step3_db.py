@@ -1,23 +1,8 @@
-# ============================================================
-# step3_database.py
-# WHAT  : Store weather data in a local SQLite database
-# HOW   : Use Python's built-in sqlite3 module
-#         Data is stored as JSON string in a single column
-#
-# Table schema:
-#   id          INTEGER  - auto increment
-#   data        TEXT     - JSON string of all weather fields
-#   created_at  DATETIME - auto set to current timestamp
-# ============================================================
-
 import sqlite3
 import json
 import os
-from datetime import datetime
 
-
-DB_FILE = "weather.db"
-
+DB_FILE = "currency.db"
 
 def get_connection():
     """Create and return a database connection."""
@@ -25,20 +10,23 @@ def get_connection():
     conn.row_factory = sqlite3.Row  # allows accessing columns by name
     return conn
 
-
 def init_db():
     """
     Create the 'records' table if it doesn't exist yet.
-    Only runs once — safe to call every time the script runs.
+    Columns match the currency JSON: amount, base, MYR, EUR, GBP, date.
     """
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS records (
-            id         INTEGER  PRIMARY KEY AUTOINCREMENT,
-            data       TEXT     NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            amount REAL,
+            base TEXT,
+            myr REAL,
+            eur REAL,
+            gbp REAL,
+            date TEXT
         )
     """)
 
@@ -46,67 +34,65 @@ def init_db():
     conn.close()
     print("[DB] Database initialized. Table 'records' is ready.")
 
-
-def save_to_db(weather_data: dict) -> dict:
+def save_to_db(currency_data):
     """
     Insert a new record into the database.
-    Returns a dict with { id, data, created_at } for use in email notification.
+    Expects a dict like:
+    {
+      "amount": 1,
+      "base": "USD",
+      "date": "2026-04-28",
+      "rates": {"EUR": 0.85616, "GBP": 0.74242, "MYR": 3.952}
+    }
     """
-
-    # Convert the weather data dictionary to a JSON string
-    json_data = json.dumps(weather_data)
-
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(
-        "INSERT INTO records (data) VALUES (?)",
-        (json_data,)
-    )
+    cursor.execute("""
+        INSERT INTO records (amount, base, myr, eur, gbp, date)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        currency_data["amount"],
+        currency_data["base"],
+        currency_data["rates"]["MYR"],
+        currency_data["rates"]["EUR"],
+        currency_data["rates"]["GBP"],
+        currency_data["date"]
+    ))
 
     conn.commit()
-
-    # Get the ID and timestamp of the newly inserted row
     record_id = cursor.lastrowid
-    cursor.execute("SELECT created_at FROM records WHERE id = ?", (record_id,))
-    row = cursor.fetchone()
-    created_at = row["created_at"]
-
     conn.close()
 
-    result = {
-        "id": record_id,
-        "data": weather_data,
-        "created_at": created_at,
-    }
-
-    print(f"[DB] Saved! Record ID: {record_id} | Created At: {created_at}")
-    return result
-
+    print(f"[DB] Saved! Record ID: {record_id}")
+    return record_id
 
 def get_all_records():
     """Fetch all records from the database (for viewing/debugging)."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, data, created_at FROM records ORDER BY id DESC")
+    cursor.execute("SELECT * FROM records ORDER BY id DESC")
     rows = cursor.fetchall()
     conn.close()
     return rows
 
-
 # ── Run this file directly to test ───────────────────────────
 if __name__ == "__main__":
-    from step1_scrape import scrape_weather
+    # Example currency data (normally scraped from API)
+    sample_data = {
+        "amount": 1,
+        "base": "USD",
+        "date": "2026-04-28",
+        "rates": {
+            "EUR": 0.85616,
+            "GBP": 0.74242,
+            "MYR": 3.952
+        }
+    }
 
     init_db()
-    data = scrape_weather("KualaLumpur")
-    record = save_to_db(data)
-
-    print("\n── Saved Record ──")
-    print(f"  ID         : {record['id']}")
-    print(f"  Created At : {record['created_at']}")
-    print(f"  Data       : {json.dumps(record['data'], indent=4)}")
+    record_id = save_to_db(sample_data)
 
     print("\n── All Records in DB ──")
     for row in get_all_records():
-        print(f"  [{row['id']}] {row['created_at']} → {row['data'][:60]}...")
+        print(dict(row))
