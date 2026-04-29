@@ -19,24 +19,24 @@
 
 import sys
 import argparse
-from step1_scrape        import scrape_weather
+from step1_scrape        import scrape_country
 from step2_excel         import save_to_excel
-from step3_database      import init_db, save_to_db
+from step3_db            import init_db, save_to_db
 # from step4_email       import send_notification          # Gmail — blocked by Dyson network
-from step5_telegram      import send_telegram_notification
-from step6_sendgrid      import send_sendgrid_notification
-from step7_teams         import send_teams_notification
-from step8_outlook       import send_outlook_notification
+# from step5_telegram      import send_telegram_notification
+# from step6_sendgrid      import send_sendgrid_notification
+# from step7_teams         import send_teams_notification
+# from step8_outlook       import send_outlook_notification
 
 
-def run_pipeline(city: str = "KualaLumpur"):
+def run_pipeline(city: str = "MYR"):
     print("=" * 55)
     print("  Python Automation Pipeline")
     print("=" * 55)
 
     # ── STEP 1: Scrape ────────────────────────────────────────
     print("\n[STEP 1] Scraping weather data...")
-    weather_data = scrape_weather(city)
+    weather_data = scrape_country(city)
 
     # ── STEP 2: Excel ─────────────────────────────────────────
     print("\n[STEP 2] Saving to Excel...")
@@ -52,8 +52,8 @@ def run_pipeline(city: str = "KualaLumpur"):
     # email_ok = send_notification(record)
 
     # ── STEP 5: Telegram ──────────────────────────────────────
-    print("\n[STEP 5] Sending Telegram notification...")
-    telegram_ok = send_telegram_notification(record)
+    # print("\n[STEP 5] Sending Telegram notification...")
+    # telegram_ok = send_telegram_notification(record)
 
     # ── STEP 6: SendGrid Email ────────────────────────────────
     # print("\n[STEP 6] Sending SendGrid email notification...")
@@ -76,7 +76,7 @@ def run_pipeline(city: str = "KualaLumpur"):
     print(f"  Record ID    : {record['id']}")
     print(f"  Saved At     : {record['created_at']}")
     print(f"  Excel File   : {excel_path}")
-    print(f"  Telegram     : {'Sent' if telegram_ok else 'Failed (check TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID)'}")
+    # print(f"  Telegram     : {'Sent' if telegram_ok else 'Failed (check TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID)'}")
     # print(f"  SendGrid     : {'Sent' if sendgrid_ok else 'Failed (check SENDGRID_API_KEY)'}")
     # print(f"  Teams        : {'Sent' if teams_ok else 'Failed (check TEAMS_WEBHOOK_URL)'}")
     # print(f"  Outlook      : {'Sent' if outlook_ok else 'Failed (check OUTLOOK_SENDER_EMAIL / OUTLOOK_PASSWORD)'}")
