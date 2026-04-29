@@ -1,4 +1,6 @@
 import requests
+import json
+from datetime import datetime
 
 def scrape_country(base="USD", targets=["MYR", "EUR", "GBP"]):
     """
@@ -14,10 +16,26 @@ def scrape_country(base="USD", targets=["MYR", "EUR", "GBP"]):
         response = requests.get(url, params=params, verify=False)
         response.raise_for_status()
         data = response.json()
-        print(f"Exchange rates for {data['base']} on {data['date']}:")
-        for currency, rate in data['rates'].items():
-            print(f"  1 {data['base']} = {rate} {currency}")
-        return data['rates']
+        # print(f"Exchange rates for {data['base']} on {data['date']}:")
+        # for currency, rate in data['rates'].items():
+        #     print(f"  1 {data['base']} = {rate} {currency}")
+        # return data['rates']
+
+        # Filter the rates dictionary so it only includes the target currencies
+        filtered_rates = {cur: rate for cur, rate in data['rates'].items() if cur in targets}
+        # Build the filtered JSON object
+        filtered_json = {
+            "base": data["base"],
+            "date": data["date"],
+            "rates": filtered_rates,
+            "scraped_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        }
+
+        # Print the raw JSON in a readable format
+        print(json.dumps(filtered_json, indent=2))
+        return data  # You can also return it for further use
+
     except requests.RequestException as e:
         print("Error fetching data:", e)
         return None
