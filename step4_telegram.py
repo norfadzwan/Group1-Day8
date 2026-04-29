@@ -1,63 +1,149 @@
 import requests
 import os
 from dotenv import load_dotenv
+ 
 load_dotenv()
-
+ 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID   = os.getenv("TELEGRAM_CHAT_ID")
-TELEGRAM_API_URL   = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-
-def send_exchange_rate_notification(record: dict) -> bool:
+ 
+TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+ 
+ 
+def send_telegram_notification(record: dict) -> bool:
     """
-    Send a Telegram message with exchange rate details.
+    Send a Telegram message with currency record details and market status.
+ 
     Args:
-        record: dict with keys like { "base", "date", "rates", "scraped_at" }
+        record: dict with keys { amount, base, date, rates }
+ 
     Returns:
         True if sent successfully, False otherwise
     """
-    # Compose rates info dynamically
-    rates_lines = "\n".join(
-        [f"<b>1 {record['base']} = {rate} {cur}</b>" for cur, rate in record["rates"].items()]
-    )
+ 
+    amount = record["amount"]
+    base   = record["base"]
+    date   = record["date"]
+    rates  = record["rates"]
+ 
+    myr_value = rates["MYR"]
+ 
+    # Market logic
+    if myr_value >= 4.5:
+        market_status = "🚀 Market boom"
+    elif myr_value < 3.5:
+        market_status = "⚠️ Sell your shares ASAP"
+    else:
+        market_status = "⏸️ Market stagnant"
+ 
     message = (
-        f"<b>Exchange Rate Report</b>\n"
-        f"Date           : <code>{record['date']}</code>\n"
-        f"Scraped At     : {record['scraped_at']}\n"
-        f"<b>Base Currency:</b> {record['base']}\n\n"
-        f"{rates_lines}"
+        f"<b>Forex Report Saved</b>\n"
+        f"Base Currency : {base}\n"
+        f"Amount        : {amount}\n"
+        f"API Date      : {date}\n\n"
+        f"<b>Rates:</b>\n"
+        f"EUR : {rates['EUR']}\n"
+        f"GBP : {rates['GBP']}\n"
+        f"MYR : {myr_value}\n\n"
+        f"<b>Status:</b> {market_status}\n"
+        f"Excel report saved to: output/forex_report.xlsx"
     )
-
+ 
     payload = {
         "chat_id":    TELEGRAM_CHAT_ID,
         "text":       message,
         "parse_mode": "HTML",
     }
+ 
     try:
-        print("[TELEGRAM] Sending exchange rate notification...")
+        print("[TELEGRAM] Sending notification...")
         response = requests.post(TELEGRAM_API_URL, json=payload, timeout=10)
         response.raise_for_status()
         print(f"[TELEGRAM] Notification sent (chat_id: {TELEGRAM_CHAT_ID})")
         return True
+ 
     except requests.exceptions.HTTPError as e:
         print(f"[TELEGRAM] HTTP error: {e} — Response: {response.text}")
         return False
     except Exception as e:
         print(f"[TELEGRAM] Failed to send notification: {e}")
         return False
-
+ 
+ 
 # ── Run this file directly to test ───────────────────────────
 if __name__ == "__main__":
-    sample_record = {
+    test_record = {
+        "amount": 1,
         "base": "USD",
         "date": "2026-04-28",
         "rates": {
-          "EUR": 0.85616,
-          "GBP": 0.74242,
-          "MYR": 3.952
-        },
-        "scraped_at": "2026-04-29 15:33:20"
+            "EUR": 0.85616,
+            "GBP": 0.74242,
+            "MYR": 4.6
+        }
     }
-    send_exchange_rate_notification(sample_record)
+    send_telegram_notification(test_record)
+
+# import requests
+# import os
+# from dotenv import load_dotenv
+# load_dotenv()
+
+# TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+# TELEGRAM_CHAT_ID   = os.getenv("TELEGRAM_CHAT_ID")
+# TELEGRAM_API_URL   = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+
+# def send_exchange_rate_notification(record: dict) -> bool:
+#     """
+#     Send a Telegram message with exchange rate details.
+#     Args:
+#         record: dict with keys like { "base", "date", "rates", "scraped_at" }
+#     Returns:
+#         True if sent successfully, False otherwise
+#     """
+#     # Compose rates info dynamically
+#     rates_lines = "\n".join(
+#         [f"<b>1 {record['base']} = {rate} {cur}</b>" for cur, rate in record["rates"].items()]
+#     )
+#     message = (
+#         f"<b>Exchange Rate Report</b>\n"
+#         f"Date           : <code>{record['date']}</code>\n"
+#         f"Scraped At     : {record['scraped_at']}\n"
+#         f"<b>Base Currency:</b> {record['base']}\n\n"
+#         f"{rates_lines}"
+#     )
+
+#     payload = {
+#         "chat_id":    TELEGRAM_CHAT_ID,
+#         "text":       message,
+#         "parse_mode": "HTML",
+#     }
+#     try:
+#         print("[TELEGRAM] Sending exchange rate notification...")
+#         response = requests.post(TELEGRAM_API_URL, json=payload, timeout=10)
+#         response.raise_for_status()
+#         print(f"[TELEGRAM] Notification sent (chat_id: {TELEGRAM_CHAT_ID})")
+#         return True
+#     except requests.exceptions.HTTPError as e:
+#         print(f"[TELEGRAM] HTTP error: {e} — Response: {response.text}")
+#         return False
+#     except Exception as e:
+#         print(f"[TELEGRAM] Failed to send notification: {e}")
+#         return False
+
+# # ── Run this file directly to test ───────────────────────────
+# if __name__ == "__main__":
+#     sample_record = {
+#         "base": "USD",
+#         "date": "2026-04-28",
+#         "rates": {
+#           "EUR": 0.85616,
+#           "GBP": 0.74242,
+#           "MYR": 3.952
+#         },
+#         "scraped_at": "2026-04-29 15:33:20"
+#     }
+#     send_exchange_rate_notification(sample_record)
 
 # # ============================================================
 # # step5_telegram.py
