@@ -1,13 +1,14 @@
 import sqlite3
 import json
 import os
+from datetime import datetime
 
 DB_FILE = "currency.db"
 
 def get_connection():
     """Create and return a database connection."""
     conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row  # allows accessing columns by name
+    conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
@@ -21,12 +22,12 @@ def init_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS records (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            amount REAL,
-            base TEXT,
-            myr REAL,
-            eur REAL,
-            gbp REAL,
-            date TEXT
+            Amount REAL,
+            Base TEXT,
+            MYR REAL,
+            EUR REAL,
+            GBP REAL,
+            Date TEXT
         )
     """)
 
@@ -49,7 +50,7 @@ def save_to_db(currency_data):
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO records (amount, base, myr, eur, gbp, date)
+        INSERT INTO records (Amount, Base, MYR, EUR, GBP, Date)
         VALUES (?, ?, ?, ?, ?, ?)
     """, (
         currency_data["amount"],
@@ -76,9 +77,7 @@ def get_all_records():
     conn.close()
     return rows
 
-# ── Run this file directly to test ───────────────────────────
 if __name__ == "__main__":
-    # Example currency data (normally scraped from API)
     sample_data = {
         "amount": 1,
         "base": "USD",

@@ -18,6 +18,7 @@ EXCEL_FILE = os.path.join(OUTPUT_FOLDER, "forex_report.xlsx")
 
 HEADERS = [
     "ID",
+    "Amount"
     "Base Currency",
     "Target Currency",
     "Exchange Rate",
@@ -59,6 +60,7 @@ def save_to_excel(data: dict) -> str:
     for target, rate in data["rates"].items():
         row = [
             next_id,
+            1.0,
             data["base"],
             target,
             float(rate),
