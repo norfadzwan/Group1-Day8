@@ -3,7 +3,7 @@ import json
 import os
 from datetime import datetime
 
-DB_FILE = "Group1-Day8/currency.db"
+DB_FILE = "currency.db"
 
 def get_connection():
     """Create and return a database connection."""
@@ -78,20 +78,9 @@ def get_all_records():
     return rows
 
 if __name__ == "__main__":
-    sample_data = {
-        "amount": 1,
-        "base": "USD",
-        "date": "2026-04-28",
-        "rates": {
-            "EUR": 0.85616,
-            "GBP": 0.74242,
-            "MYR": 3.952
-        }
-    }
+    from step1_scrape import scrape_country
+    data = scrape_country()
 
     init_db()
-    record_id = save_to_db(sample_data)
-
-    print("\n── All Records in DB ──")
-    for row in get_all_records():
-        print(dict(row))
+    db_data=save_to_db(data)
+    print(json.dumps(db_data, indent=2))
