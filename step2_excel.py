@@ -18,7 +18,7 @@ EXCEL_FILE = os.path.join(OUTPUT_FOLDER, "forex_report.xlsx")
 
 HEADERS = [
     "ID",
-    "Amount"
+    "Amount",
     "Base Currency",
     "Target Currency",
     "Exchange Rate",
@@ -38,7 +38,7 @@ def save_to_excel(data: dict) -> str:
     if os.path.exists(EXCEL_FILE):
         wb = openpyxl.load_workbook(EXCEL_FILE)
         ws = wb.active
-        next_id = ws.max_row + 1  # because row 1 is headers
+        next_id = ws.max_row  # because row 1 is headers
         print(f"[EXCEL] Appending to existing file. Current rows: {ws.max_row - 1}")
     else:
         wb = openpyxl.Workbook()
@@ -57,18 +57,18 @@ def save_to_excel(data: dict) -> str:
         print("[EXCEL] Created new Excel file with headers.")
 
     # Add data rows for each rate
-    for target, rate in data["rates"].items():
-        row = [
-            next_id,
-            1.0,
-            data["base"],
-            target,
-            float(rate),
-            data["date"],
-            data.get("scraped_at", datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-        ]
-        ws.append(row)
-        next_id += 1
+        for target, rate in data["rates"].items():
+            row = [
+                next_id,
+                1.0,
+                data["base"],
+                target,
+                float(rate),
+                data["date"],
+                data.get("scraped_at", datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+            ]
+            ws.append(row)
+            next_id += 1
 
     wb.save(EXCEL_FILE)
     print(f"[EXCEL] Saved rates → {EXCEL_FILE}")
